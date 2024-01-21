@@ -212,7 +212,7 @@ class VideoDataset(Dataset):
         return buffer.transpose((3, 0, 1, 2))
 
     def load_frames(self, file_dir):
-        frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)])
+        frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)],key=lambda x:int(x.split('/')[-1][:-4]))
         frame_count = len(frames)
         buffer = np.empty((frame_count, self.resize_height, self.resize_width, 3), np.dtype('float32'))
         for i, frame_name in enumerate(frames):
