@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
 from dataloaders.dataset import VideoDataset
-from network import C3D_model, R2Plus1D_model, R3D_model
+from network import C3D_model, R2Plus1D_model, R3D_model, ConvNext3D
 
 # Use GPU if available else revert to CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -22,7 +22,7 @@ nEpochs = 100  # Number of epochs for training
 resume_epoch = 0  # Default is 0, change if want to resume
 useTest = True # See evolution of the test set when training
 nTestInterval = 20 # Run on test set every nTestInterval epochs
-snapshot = 50 # Store a model every snapshot epochs
+snapshot = 5 # Store a model every snapshot epochs
 lr = 1e-3 # Learning rate
 
 dataset = 'ucf101' # Options: hmdb51 or ucf101
@@ -46,7 +46,7 @@ else:
     run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
 
 save_dir = os.path.join(save_dir_root, 'run', 'run_' + str(run_id))
-modelName = 'C3D' # Options: C3D or R2Plus1D or R3D
+modelName = 'ConvNext' # Options: C3D or R2Plus1D or R3D
 saveName = modelName + '-' + dataset
 
 def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=lr,
@@ -56,8 +56,11 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             num_classes (int): Number of classes in the data
             num_epochs (int, optional): Number of epochs to train for.
     """
-
-    if modelName == 'C3D':
+    if modelName == 'ConvNext':
+        model = ConvNext3D.convnext_xtiny()
+        #train_params = [{'params': ConvNext3D.get_1x_lr_params(model), 'lr': lr},
+        #                {'params': ConvNext3D.get_10x_lr_params(model), 'lr': lr * 10}]
+    elif modelName == 'C3D':
         model = C3D_model.C3D(num_classes=num_classes, pretrained=True)
         train_params = [{'params': C3D_model.get_1x_lr_params(model), 'lr': lr},
                         {'params': C3D_model.get_10x_lr_params(model), 'lr': lr * 10}]
@@ -94,9 +97,9 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     writer = SummaryWriter(log_dir=log_dir)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=20, shuffle=True, num_workers=4)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=20, num_workers=4)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=20, num_workers=4)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=60, shuffle=True, num_workers=20)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=60, num_workers=20)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=60, num_workers=20)
 
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}
