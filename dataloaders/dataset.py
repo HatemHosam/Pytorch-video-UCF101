@@ -204,7 +204,8 @@ class VideoDataset(Dataset):
     def normalize(self, buffer):
         for i, frame in enumerate(buffer):
             frame /= 255. 
-            frame -= np.array([[[0.353, 0.384, 0.400]]])
+            frame -= np.array([[[0.485, 0.456, 0.406]]])
+            frame /=  np.array([[[0.229, 0.224, 0.225]]])
             buffer[i] = frame
 
         return buffer
